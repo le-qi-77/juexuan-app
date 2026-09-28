@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#F0EAD8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="觉察">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icons/apple-touch-180.png">
+<title>觉察</title>
+<style>
+:root{
+  --bg:#F9F4E8; --nav:#F0EAD8; --card:#FFFFFF; --card-shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --text:#1C1C1E; --sub:#8E8E93; --yellow:#FFCC00; --red:#FF3B30; --blue:#007AFF; --line:rgba(0,0,0,.06);
+  --c-health:#34C759; --c-work:#007AFF; --c-interpersonal:#FF9500; --c-daily:#AF52DE;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1C1C1E; --nav:#2C2C2E; --card:#2C2C2E; --card-shadow:0 1px 3px rgba(0,0,0,.3);
+    --text:#F2F2F7; --sub:#98989F; --yellow:#FFD60A; --line:rgba(255,255,255,.1);
+  }
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0;}
+html,body{height:100%; overscroll-behavior-y:none;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif;
+  background:var(--nav); color:var(--text); -webkit-font-smoothing:antialiased; line-height:1.5;
+  padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
+}
+.wrap{max-width:760px; margin:0 auto; min-height:100%; background:var(--nav); display:flex; flex-direction:column;}
+
+.header{
+  position:sticky; top:0; z-index:10; background:var(--nav);
+  padding:14px 18px 10px; display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--line);
+}
+.title{font-size:28px; font-weight:700; letter-spacing:.5px;}
+.subtitle{font-size:12px; color:var(--sub); margin-top:2px;}
+.new-btn{
+  width:44px; height:44px; border-radius:50%; border:none; background:var(--yellow); color:#1C1C1E;
+  font-size:26px; line-height:1; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.18);
+  display:flex; align-items:center; justify-content:center; transition:transform .1s;
+}
+.new-btn:active{transform:scale(.92);}
+
+.tabs{
+  position:sticky; top:68px; z-index:9; background:var(--nav);
+  padding:8px 14px 10px; display:flex; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch;
+  border-bottom:1px solid var(--line); scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{
+  font-size:13px; padding:6px 14px; border-radius:16px; border:1px solid var(--line);
+  background:var(--card); color:var(--sub); cursor:pointer; white-space:nowrap; font-weight:500;
+}
+.tab.active{color:#fff; border-color:transparent;}
+.tab .dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:middle;}
+
+.list{flex:1; padding:12px 14px 96px;}
+.day-group{margin-bottom:20px;}
+.day-head{font-size:13px; color:var(--sub); font-weight:600; padding:6px 6px 8px;}
+.card{
+  background:var(--card); border-radius:12px; padding:14px 16px; margin-bottom:10px;
+  box-shadow:var(--card-shadow); cursor:pointer; transition:transform .08s;
+}
+.card:active{transform:scale(.985);}
+.card-top{display:flex; justify-content:space-between; align-items:center; gap:10px;}
+.card-meta{display:flex; align-items:center; gap:8px; min-width:0; flex-wrap:wrap;}
+.card-time{font-size:12px; color:var(--sub);}
+.cat-chip{font-size:11px; padding:2px 9px; border-radius:11px; color:#fff; font-weight:600; display:inline-flex; align-items:center; gap:4px;}
+.card-del{font-size:13px; color:var(--red); background:none; border:none; cursor:pointer; opacity:.55; flex:none;}
+.card-del:active{opacity:1;}
+.card-body{font-size:15px; color:var(--text); margin:8px 0; white-space:pre-wrap; word-break:break-word;
+  display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden;}
+.card-foot{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+.mood-pill{font-size:12px; padding:2px 9px; border-radius:11px; background:rgba(255,204,0,.18); color:var(--text); display:inline-flex; align-items:center; gap:5px; font-weight:500;}
+.insight{font-size:12px; color:var(--sub); font-style:italic; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; flex:1; min-width:0;}
+.empty{text-align:center; color:var(--sub); padding:70px 20px; font-size:15px; line-height:1.8;}
+
+.footer{
+  position:fixed; bottom:0; left:0; right:0; background:var(--nav); border-top:1px solid var(--line);
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom)); display:flex; justify-content:center; gap:8px; z-index:9;
+}
+.footer-inner{max-width:760px; width:100%; display:flex; gap:8px; justify-content:space-between; align-items:center;}
+.count{font-size:13px; color:var(--sub);}
+.imp-btn{font-size:13px; padding:7px 12px; border-radius:8px; border:1px solid var(--line);
+  background:var(--card); color:var(--blue); cursor:pointer;}
+.imp-btn:active{opacity:.6;}
+.sync-btn{font-size:13px; padding:7px 14px; border-radius:8px; border:none; background:var(--yellow); color:#1C1C1E; font-weight:600; cursor:pointer;}
+.sync-btn.busy{opacity:.6; pointer-events:none;}
+.install-btn{font-size:13px; padding:7px 14px; border-radius:8px; border:none; background:var(--card); color:var(--blue); font-weight:600; cursor:pointer; display:none; border:1px solid var(--line);}
+.install-btn.show{display:inline-block;}
+
+/* 模态通用 */
+.modal-mask{position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:50; display:none; align-items:flex-end; justify-content:center;}
+.modal-mask.show{display:flex;}
+.modal{background:var(--bg); width:100%; max-width:760px; max-height:94vh; border-radius:16px 16px 0 0; display:flex; flex-direction:column; overflow:hidden; animation:slideup .22s ease;}
+@keyframes slideup{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.modal-head{display:flex; justify-content:space-between; align-items:center; padding:14px 16px; border-bottom:1px solid var(--line); flex:none;}
+.modal-btn{font-size:16px; background:none; border:none; cursor:pointer;}
+.cancel{color:var(--red);} .save{color:var(--blue); font-weight:600;}
+.modal-body{padding:14px 16px calc(30px + env(safe-area-inset-bottom)); overflow-y:auto;}
+
+.field-label{font-size:13px; color:var(--sub); font-weight:600; margin:0 0 8px;}
+.field-label .sub{font-weight:400; font-size:11px;}
+.cat-picker{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+.cat-opt{display:flex; align-items:center; gap:6px; padding:9px 14px; border-radius:10px; background:var(--card); cursor:pointer; font-size:14px; border:2px solid transparent; font-weight:500;}
+.cat-opt.on{border-color:var(--yellow);}
+.cat-opt .dot{width:12px; height:12px; border-radius:50%;}
+
+textarea.content{width:100%; min-height:140px; border:none; background:var(--card); border-radius:10px; padding:12px 14px; font-size:16px; color:var(--text); resize:vertical; font-family:inherit; line-height:1.6;}
+textarea.content:focus{outline:2px solid var(--yellow);}
+
+.emo-group{margin-bottom:8px;}
+.emo-group-head{display:flex; align-items:center; justify-content:space-between; padding:10px 13px; background:var(--card); border-radius:10px; cursor:pointer; font-size:14px; font-weight:600; color:var(--text);}
+.emo-group-head .chev{color:var(--sub); transition:transform .18s; font-size:12px;}
+.emo-group.expanded .emo-group-head .chev{transform:rotate(90deg);}
+.emo-chips{display:none; flex-wrap:wrap; gap:7px; padding:9px 4px 4px;}
+.emo-group.expanded .emo-chips{display:flex;}
+.emo-chip{display:inline-flex; align-items:center; gap:5px; padding:7px 12px; border-radius:16px; background:var(--card); border:2px solid transparent; cursor:pointer; font-size:14px; color:var(--text);}
+.emo-chip.on{border-color:var(--yellow); background:rgba(255,204,0,.18);}
+.emo-chip .e{font-size:16px; line-height:1;}
+.emo-custom-wrap{margin-top:8px; display:none;}
+.emo-custom-wrap.on{display:block;}
+.emo-custom-wrap input[type=text]{width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--text); font-size:14px; font-family:inherit;}
+.emo-custom-wrap input:focus{outline:2px solid var(--yellow);}
+
+.mood-row{margin-top:18px;}
+.mood-slider{display:flex; align-items:center; gap:12px; margin-top:6px;}
+.mood-emoji{font-size:26px; width:34px; text-align:center;}
+input[type=range]{flex:1; accent-color:var(--yellow);}
+.slider-val{font-size:15px; color:var(--text); min-width:34px; text-align:right; font-weight:700;}
+
+.insight-wrap{margin-top:18px;}
+.txt-input{width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--text); font-size:14px; font-family:inherit;}
+.txt-input:focus{outline:2px solid var(--yellow);}
+.hint{font-size:12px; color:var(--sub); margin-top:6px; line-height:1.6;}
+.btn-block{width:100%; padding:11px; border-radius:10px; border:none; background:var(--yellow); color:#1C1C1E; font-size:15px; font-weight:600; cursor:pointer; margin-top:12px;}
+.btn-block:active{opacity:.7;}
+.btn-block.ghost{background:var(--card); color:var(--blue); border:1px solid var(--line);}
+.sync-status{font-size:12px; color:var(--sub); margin-top:10px; line-height:1.6;}
+
+/* toast */
+.toast{position:fixed; bottom:88px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.82); color:#fff; padding:9px 18px; border-radius:10px; font-size:13px; z-index:60; opacity:0; transition:opacity .25s; pointer-events:none; max-width:90vw; text-align:center;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <div class="title">觉察</div>
+      <div class="subtitle" id="subtitle">记录此刻的自己</div>
+    </div>
+    <button class="new-btn" onclick="openNew()" title="新建">+</button>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="list" id="list"></div>
+
+  <div class="footer">
+    <div class="footer-inner">
+      <span class="count" id="count"></span>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="install-btn" id="install-btn" onclick="install()">安装</button>
+        <button class="sync-btn" id="sync-btn" onclick="openSync()">☁</button>
+        <button class="imp-btn" onclick="document.getElementById('imp-file').click()">导入</button>
+        <button class="imp-btn" onclick="exportAll()">导出</button>
+      </div>
+    </div>
+    <input type="file" id="imp-file" accept=".json,application/json" multiple style="display:none" onchange="importFiles(this.files)">
+  </div>
+</div>
+
+<!-- 记录模态 -->
+<div class="modal-mask" id="mask" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <button class="modal-btn cancel" onclick="closeModal()">取消</button>
+      <span style="font-size:15px;font-weight:600;">记录</span>
+      <button class="modal-btn save" onclick="save()">保存</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-label">板块</div>
+      <div class="cat-picker" id="cat-picker"></div>
+
+      <div class="field-label">觉察 / 心情 / 事项</div>
+      <textarea class="content" id="rec-content" placeholder="此刻发生了什么、你的心情、觉察到什么……"></textarea>
+
+      <div style="margin-top:18px;">
+        <div class="field-label">心情 <span class="sub">（直接选，或用「其他」自定义）</span></div>
+        <div id="emo-groups"></div>
+        <div class="emo-custom-wrap" id="emo-custom-wrap">
+          <input type="text" id="emo-custom" class="txt-input" placeholder="输入你的心情词，如：五味杂陈">
+        </div>
+      </div>
+
+      <div class="mood-row">
+        <div class="field-label">心情强度 <span class="sub">（可选，1-10）</span></div>
+        <div class="mood-slider">
+          <span class="mood-emoji" id="mood-emoji">😐</span>
+          <input type="range" min="1" max="10" value="5" id="mood" oninput="updateMood(this.value)">
+          <span class="slider-val" id="mood-val">5</span>
+        </div>
+      </div>
+
+      <div class="insight-wrap">
+        <div class="field-label">一句话观察 / 启发（可选）</div>
+        <input type="text" id="insight" class="txt-input" placeholder="例如：愤怒的内核是被当成下级">
+        <div class="hint">不填也行；填了就是给自己的点醒。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 同步设置模态 -->
+<div class="modal-mask" id="sync-mask" onclick="if(event.target===this)closeSync()">
+  <div class="modal">
+    <div class="modal-head">
+      <button class="modal-btn cancel" onclick="closeSync()">关闭</button>
+      <span style="font-size:15px;font-weight:600;">☁ 云备份</span>
+      <span style="width:32px"></span>
+    </div>
+    <div class="modal-body">
+      <div class="hint" style="margin-bottom:12px;line-height:1.7">把手机记录备份到你的 GitHub Gist（私密）。<b>换手机时</b>：在新手机装本应用、填同一个 Gist ID，点「从云端恢复」即可找回全部记录。只有一台手机在用，不会出现同步冲突。</div>
+
+      <div class="field-label">GitHub Token <span class="sub">（仅 gist 权限）</span></div>
+      <input type="password" id="cfg-token" class="txt-input" placeholder="ghp_…  或  github_pat_…">
+      <div class="hint">用 <b>classic token</b>，只勾 <code>gist</code> scope。创建：github.com → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token。随时可在 GitHub 吊销。</div>
+
+      <div class="field-label" style="margin-top:16px">Gist ID <span class="sub">（首次留空自动创建；换手机时填原来的）</span></div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="cfg-gistid" class="txt-input" placeholder="首次留空；换手机时把原 Gist ID 填这里" style="flex:1">
+        <button class="imp-btn" onclick="copyGistId()" id="copy-id-btn" style="white-space:nowrap">复制</button>
+      </div>
+      <div class="hint">首次点下方按钮会自动建一个私密 Gist 并上传本机记录；Gist ID 请<b>另存一处</b>（如手机备忘录），换手机要用。</div>
+
+      <button class="btn-block" onclick="bindGist()" id="bind-btn">创建 / 绑定 Gist</button>
+      <div class="sync-status" id="sync-status"></div>
+
+      <div class="field-label" style="margin-top:14px">备份 / 恢复</div>
+      <button class="btn-block" onclick="backupNow()" id="backup-btn">☁ 备份到云端</button>
+      <div class="hint">把本机当前记录整份覆盖到云端。新增/修改记录后会自动备份，也可手动点这里立即备份。</div>
+      <button class="btn-block ghost" onclick="restoreNow()" id="restore-btn">☁ 从云端恢复</button>
+      <div class="hint">拉取云端记录，与本机合并（按时间较新者为准，不会丢本机现有的）。换手机/重装时用。</div>
+      <button class="btn-block ghost" onclick="disconnect()" style="color:var(--red);margin-top:14px">断开 / 清除登录</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ 数据模型 ============ */
+const KEY='juexuan.records';
+const CATS=[
+  {key:'health',        name:'身体健康', color:'#34C759', emoji:'💪'},
+  {key:'work',          name:'工作学习', color:'#007AFF', emoji:'📚'},
+  {key:'interpersonal', name:'人际关系', color:'#FF9500', emoji:'🤝'},
+  {key:'daily',         name:'生活日常', color:'#AF52DE', emoji:'🌿'},
+];
+const CAT_MAP=Object.fromEntries(CATS.map(c=>[c.key,c]));
+const EMO_GROUPS=[
+  {head:'消极（难受）', list:[
+    {n:'愤怒',e:'😠'},{n:'焦躁',e:'😰'},{n:'委屈',e:'🥺'},{n:'沮丧',e:'😞'},
+    {n:'无力',e:'😩'},{n:'紧张',e:'😬'},{n:'孤独',e:'😔'},{n:'内疚',e:'😓'},
+    {n:'迷茫',e:'😵‍💫'},{n:'厌烦',e:'😒'},
+  ]},
+  {head:'积极（好受）', list:[
+    {n:'平静',e:'😌'},{n:'满足',e:'😊'},{n:'感动',e:'🥹'},{n:'期待',e:'🤩'},
+    {n:'自信',e:'😎'},{n:'放松',e:'☺️'},{n:'兴奋',e:'🤪'},
+  ]},
+  {head:'中性 / 波动', list:[
+    {n:'惊讶',e:'😲'},{n:'矛盾',e:'😕'},{n:'麻木',e:'😶'},
+  ]},
+];
+const EMO_MAP={};
+EMO_GROUPS.forEach(g=>g.list.forEach(x=>EMO_MAP[x.n]=x.e));
+
+// state: {records:[...], deletedIds:[...], config:{token,gistId,lastSync}}
+let state={records:[],deletedIds:[],config:{}};
+
+let editingId=null;
+let curCat='all';
+let pickCat=CATS[0].key;
+let pickEmo=null;
+let expandedGroups=new Set();
+
+/* ============ 存取 / 迁移 ============ */
+/* PWA 独立模式的 localStorage 会被浏览器整体驱逐（尤其桌面 Chrome/Edge、iOS standalone），
+   一旦被清，token+Gist ID 丢失 → 启动时自动拉取不触发 → 本地记录也成空。
+   对策：把 config（token+gistId）额外镜像到 IndexedDB；启动时若本地配置缺失，从 IDB 找回，
+   找回后自动从 Gist 拉取，记录自愈。再叠加 navigator.storage.persist() 请求免驱逐。 */
+const IDB_NAME='juexuan', IDB_STORE='kv';
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(IDB_NAME,1);
+    r.onupgradeneeded=()=>{r.result.createObjectStore(IDB_STORE);};
+    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+  });
+}
+async function idbSet(k,v){
+  try{const db=await idbOpen();
+    await new Promise((res,rej)=>{const tx=db.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});
+  }catch(e){}
+}
+async function idbGet(k){
+  try{const db=await idbOpen();
+    return await new Promise((res)=>{const tx=db.transaction(IDB_STORE,'readonly');const rq=tx.objectStore(IDB_STORE).get(k);rq.onsuccess=()=>res(rq.result);rq.onerror=()=>res(undefined);});
+  }catch(e){return undefined;}
+}
+function load(){
+  let raw=null;
+  try{raw=JSON.parse(localStorage.getItem(KEY));}catch(e){}
+  if(Array.isArray(raw)) state={records:raw,deletedIds:[],config:{}};
+  else if(raw&&raw.records) state={records:raw.records||[],deletedIds:raw.deletedIds||[],config:raw.config||{}};
+  else state={records:[],deletedIds:[],config:{}};
+  state.records=state.records.map(migrate);
+}
+function migrate(r){
+  if(!r)return r;
+  if(r.content===undefined) r.content=r.raw_input||'';
+  if(!r.category) r.category=inferCategory(r);
+  if(r.emotion===undefined && r.dimensions && r.dimensions.emotion && r.dimensions.emotion.present)
+    r.emotion=r.dimensions.emotion.primary||undefined;
+  if(r.mood===undefined && r.dimensions && r.dimensions.emotion && r.dimensions.emotion.present)
+    r.mood=r.dimensions.emotion.intensity;
+  if(r.insight===undefined && r.ai_note) r.insight=r.ai_note;
+  if(!r.modified) r.modified=Date.parse(r.timestamp)||0;
+  return r;
+}
+function inferCategory(r){
+  const t=[...(r.tags||[])];
+  if(r.dimensions){for(const k of Object.values(r.dimensions)) if(k&&k.tags) t.push(...k.tags);}
+  if(t.some(x=>/人际|同事|朋友|家人|关系/.test(x))) return 'interpersonal';
+  if(t.some(x=>/工作|学习|职场|同事/.test(x))) return 'work';
+  if(t.some(x=>/身体|健康|运动|睡眠|饮食|症状/.test(x))) return 'health';
+  return 'daily';
+}
+function persist(){
+  localStorage.setItem(KEY,JSON.stringify(state));
+  // config 镜像到 IndexedDB（仅 token+gistId），防 localStorage 被驱逐后需要重新绑定
+  if(state.config&&(state.config.token||state.config.gistId)) idbSet('config',state.config);
+}
+function records(){return state.records;}
+
+/* ============ 工具 ============ */
+function nowISO(){
+  const d=new Date(); const pad=n=>String(n).padStart(2,'0');
+  const off=-d.getTimezoneOffset(); const sign=off>=0?'+':'-';
+  const oh=pad(Math.floor(Math.abs(off)/60)), om=pad(Math.abs(off)%60);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${sign}${oh}:${om}`;
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function short(s){s=String(s);return s.length>14?s.slice(0,14)+'…':s;}
+function moodEmoji(v){if(!v)return '😐'; if(v<=2)return '😢'; if(v<=4)return '😟'; if(v<=6)return '😐'; if(v<=8)return '🙂'; return '😊';}
+function emoEmoji(name){return EMO_MAP[name]||'🙂';}
+function dayLabel(ts){
+  const d=new Date(ts); const today=new Date(); today.setHours(0,0,0,0);
+  const dd=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  const diff=Math.round((today-dd)/86400000);
+  if(diff===0)return '今天';
+  if(diff===1)return '昨天';
+  if(diff>0&&diff<7)return ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
+  return `${d.getMonth()+1}月${d.getDate()}日`;
+}
+function timeLabel(ts){const d=new Date(ts); const p=n=>String(n).padStart(2,'0'); return `${p(d.getHours())}:${p(d.getMinutes())}`;}
+
+/* ============ 渲染 ============ */
+function renderTabs(){
+  const all={key:'all',name:'全部'};
+  const arr=[all,...CATS];
+  document.getElementById('tabs').innerHTML=arr.map(c=>{
+    const dot=c.key==='all'?'':`<span class="dot" style="background:${c.color}"></span>`;
+    const bg=curCat===c.key&&c.key!=='all'?`background:${c.color}`:'';
+    return `<div class="tab ${curCat===c.key?'active':''}" style="${bg}" onclick="setCat('${c.key}')">${dot}${c.name}</div>`;
+  }).join('');
+}
+function setCat(k){curCat=k;renderTabs();render();}
+function filtered(){return curCat==='all'?state.records:state.records.filter(r=>r.category===curCat);}
+
+function render(){
+  state.records.sort((a,b)=>(b.timestamp||'').localeCompare(a.timestamp||''));
+  const list=document.getElementById('list'); const count=document.getElementById('count');
+  const arr=filtered();
+  count.textContent=state.records.length?`共 ${state.records.length} 条${curCat!=='all'?` · 当前 ${arr.length}`:''}`:'';
+  if(!arr.length){list.innerHTML=`<div class="empty">${state.records.length?'该板块还没有记录<br>切换「全部」看看':'还没有记录<br>点右上角 + 写下第一条'}</div>`;renderSyncStatus();return;}
+  let html='',last='';
+  arr.forEach(r=>{
+    const day=dayLabel(r.timestamp);
+    if(day!==last){html+=`<div class="day-head">${day}</div>`;last=day;}
+    const c=CAT_MAP[r.category]||CAT_MAP.daily;
+    let moodPill='';
+    if(r.emotion){const e=emoEmoji(r.emotion);const v=r.mood?` ${r.mood}`:'';moodPill=`<span class="mood-pill">${e} ${esc(r.emotion)}${v}</span>`;}
+    else if(r.mood){moodPill=`<span class="mood-pill">${moodEmoji(r.mood)} ${r.mood}</span>`;}
+    const insight=r.insight?`<span class="insight">“${esc(short(r.insight))}”</span>`:'';
+    html+=`<div class="card" onclick="openEdit('${r.id}')">
+      <div class="card-top">
+        <div class="card-meta">
+          <span class="card-time">${timeLabel(r.timestamp)}</span>
+          <span class="cat-chip" style="background:${c.color}">${c.emoji} ${c.name}</span>
+        </div>
+        <button class="card-del" onclick="event.stopPropagation();delRec('${r.id}')">删除</button>
+      </div>
+      <div class="card-body">${esc(r.content||'')}</div>
+      <div class="card-foot">${moodPill}${insight}</div>
+    </div>`;
+  });
+  list.innerHTML=html;
+  renderSyncStatus();
+}
+
+function renderPicker(){
+  document.getElementById('cat-picker').innerHTML=CATS.map(c=>
+    `<div class="cat-opt ${pickCat===c.key?'on':''}" onclick="pickCat='${c.key}';renderPicker()"><span class="dot" style="background:${c.color}"></span>${c.emoji} ${c.name}</div>`
+  ).join('');
+}
+function renderEmoPicker(){
+  const html=EMO_GROUPS.map(g=>{
+    const open=expandedGroups.has(g.head);
+    const chips=g.list.map(x=>`<div class="emo-chip ${pickEmo===x.n?'on':''}" onclick="pickEmotion('${x.n.replace(/'/g,"\\'")}');"><span class="e">${x.e}</span>${x.n}</div>`).join('');
+    return `<div class="emo-group ${open?'expanded':''}"><div class="emo-group-head" onclick="toggleGroup('${g.head}')"><span>${g.head}</span><span class="chev">▸</span></div><div class="emo-chips">${chips}</div></div>`;
+  }).join('');
+  const customOpen=expandedGroups.has('自定义');
+  document.getElementById('emo-groups').innerHTML=html+
+    `<div class="emo-group ${customOpen?'expanded':''}"><div class="emo-group-head" onclick="toggleGroup('自定义')"><span>自定义</span><span class="chev">▸</span></div><div class="emo-chips">`+
+    `<div class="emo-chip ${pickEmo==='__custom'?'on':''}" onclick="pickEmotion('__custom');"><span class="e">✏️</span>其他</div></div></div>`;
+}
+function toggleGroup(head){if(expandedGroups.has(head))expandedGroups.delete(head);else expandedGroups.add(head);renderEmoPicker();}
+function pickEmotion(n){
+  pickEmo=n;renderEmoPicker();
+  document.getElementById('emo-custom-wrap').classList.toggle('on',n==='__custom');
+  if(n!=='__custom')document.getElementById('emo-custom').value='';
+}
+function updateMood(v){document.getElementById('mood-val').textContent=v;document.getElementById('mood-emoji').textContent=moodEmoji(parseInt(v));}
+
+function resetForm(){
+  document.getElementById('rec-content').value='';
+  document.getElementById('insight').value='';
+  document.getElementById('mood').value=5;updateMood(5);
+  document.getElementById('emo-custom').value='';
+  document.getElementById('emo-custom-wrap').classList.remove('on');
+  pickCat=CATS[0].key;renderPicker();
+  pickEmo=null;expandedGroups=new Set();renderEmoPicker();
+}
+function openNew(){editingId=null;resetForm();showModal();}
+function openEdit(id){
+  const r=state.records.find(x=>x.id===id); if(!r)return;
+  editingId=id; resetForm();
+  pickCat=r.category||CATS[0].key;renderPicker();
+  document.getElementById('rec-content').value=r.content||'';
+  document.getElementById('insight').value=r.insight||'';
+  if(r.mood){document.getElementById('mood').value=r.mood;updateMood(r.mood);}
+  if(r.emotion){
+    if(EMO_MAP[r.emotion]){
+      pickEmo=r.emotion;
+      const grp=EMO_GROUPS.find(g=>g.list.some(x=>x.n===r.emotion));
+      if(grp)expandedGroups.add(grp.head);
+      renderEmoPicker();
+    }else{
+      pickEmo='__custom';expandedGroups.add('自定义');
+      renderEmoPicker();
+      document.getElementById('emo-custom-wrap').classList.add('on');
+      document.getElementById('emo-custom').value=r.emotion;
+    }
+  }
+  showModal();
+}
+function showModal(){document.getElementById('mask').classList.add('show');setTimeout(()=>document.getElementById('rec-content').focus(),120);}
+function closeModal(){document.getElementById('mask').classList.remove('show');}
+
+function save(){
+  const content=document.getElementById('rec-content').value.trim();
+  if(!content){alert('写点什么吧\n（觉察 / 心情 / 事项，至少填一条）');return;}
+  let emotion=undefined;
+  if(pickEmo==='__custom'){const v=document.getElementById('emo-custom').value.trim();if(v)emotion=v;}
+  else if(pickEmo) emotion=pickEmo;
+  const ts=nowISO();
+  const r={
+    id:editingId||('app-'+ts.replace(/[-:]/g,'').slice(0,15)+'-'+Math.random().toString(36).slice(2,6)),
+    timestamp:ts, source:'app',
+    category:pickCat,
+    content,
+    emotion,
+    mood:parseInt(document.getElementById('mood').value)||undefined,
+    insight:document.getElementById('insight').value.trim()||undefined,
+    modified:Date.now(),
+    tags:[]
+  };
+  if(editingId){const i=state.records.findIndex(x=>x.id===editingId);r.id=editingId;if(i>=0)state.records[i]=r;}
+  else state.records.push(r);
+  persist();render();closeModal();
+  autoPush();
+}
+function delRec(id){
+  if(!confirm('删除这条记录？'))return;
+  state.records=state.records.filter(x=>x.id!==id);
+  // 删除后把 cloudCount 降为本机数，让自动备份能推送"已删除"后的状态
+  // （否则防误删保护会因 本机数<云端数 而跳过，导致删除不传播）
+  if(state.config)state.config.cloudCount=state.records.length;
+  persist();render();
+  autoPush();
+}
+
+/* ============ 导入导出 ============ */
+function importFiles(files){
+  let done=0,total=files.length,added=0;
+  Array.from(files).forEach(f=>{
+    const rd=new FileReader();
+    rd.onload=()=>{
+      try{
+        let obj=JSON.parse(rd.result);
+        let arr=Array.isArray(obj)?obj:(obj.records||[]);
+        arr.forEach(o=>mergeRec(o));
+        added++;
+      }catch(e){console.warn('跳过无效文件',f.name,e);}
+      if(++done===total){persist();render();toast(`导入完成，${added} 个文件处理`);}
+    };
+    rd.readAsText(f);
+  });
+}
+function mergeRec(r){
+  if(!r||!r.id)return;r=migrate(r);
+  const i=state.records.findIndex(x=>x.id===r.id);
+  if(i>=0){if((r.modified||0)>=(state.records[i].modified||0))state.records[i]=r;}
+  else state.records.push(r);
+}
+function exportAll(){
+  if(!state.records.length){alert('没有记录可导出');return;}
+  const out=JSON.stringify({records:state.records,deletedIds:state.deletedIds},null,2);
+  const blob=new Blob([out],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`觉察记录-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();URL.revokeObjectURL(a.href);
+}
+
+/* ============ Gist 云同步 ============ */
+const GH='https://api.github.com';
+function ghReq(method,path,body){
+  const opt={method,headers:{'Authorization':'Bearer '+state.config.token,'Accept':'application/vnd.github+json','Content-Type':'application/json'}};
+  if(body)opt.body=JSON.stringify(body);
+  return fetch(GH+path,opt).then(async res=>{
+    const txt=await res.text();
+    if(!res.ok)throw new Error('HTTP '+res.status+' '+txt.slice(0,160));
+    return txt?JSON.parse(txt):null;
+  });
+}
+function gistPayload(){
+  // 快照备份：只存记录，不存墓碑（单设备备份无需传播删除）
+  return JSON.stringify({records:state.records,updatedAt:new Date().toISOString()},null,2);
+}
+// 恢复时合并：按 id 取并集，modified 较新者胜出。不使用墓碑，不会因一端的删除标记误删另一端的记录。
+function mergeRemote(remote){
+  const map=new Map();
+  for(const r of state.records) map.set(r.id,r);
+  for(const r of (remote.records||[])){
+    const ex=map.get(r.id);
+    if(!ex||(r.modified||0)>(ex.modified||0)) map.set(r.id,r);
+  }
+  state.records=Array.from(map.values());
+}
+async function pullRemote(){
+  const data=await ghReq('GET','/gists/'+state.config.gistId);
+  const f=data.files&&data.files['juexuan.json'];
+  if(!f||!f.content) return null;
+  try{return JSON.parse(f.content);}catch(e){return null;}
+}
+async function pushState(){
+  await ghReq('PATCH','/gists/'+state.config.gistId,{files:{'juexuan.json':{content:gistPayload()}}});
+  state.config.lastSync=new Date().toISOString();
+  state.config.cloudCount=state.records.length;
+  persist();
+}
+function configured(){return !!(state.config.token&&state.config.gistId);}
+
+async function bindGist(){
+  const token=document.getElementById('cfg-token').value.trim();
+  const gistIdInput=document.getElementById('cfg-gistid').value.trim();
+  if(!token){alert('请先在上面填入 GitHub Token');return;}
+  state.config.token=token;
+  const btn=document.getElementById('bind-btn');
+  btn.classList.add('busy');btn.textContent='处理中…';
+  setSyncStatus('正在连接 GitHub…');
+  try{
+    if(gistIdInput){
+      state.config.gistId=gistIdInput;
+      await ghReq('GET','/gists/'+gistIdInput);
+      persist();
+      setSyncStatus('✅ 已绑定 Gist：'+gistIdInput.slice(0,8)+'…\n点「从云端恢复」可把云端记录拉到本机。');
+      toast('✅ 已绑定 Gist');
+    }else{
+      const data=await ghReq('POST','/gists',{description:'觉察记录云备份',public:false,files:{'juexuan.json':{content:gistPayload()}}});
+      state.config.gistId=data.id;
+      state.config.lastSync=new Date().toISOString();
+      state.config.cloudCount=state.records.length;
+      persist();
+      document.getElementById('cfg-gistid').value=data.id;
+      setSyncStatus('✅ 已创建私密 Gist：'+data.id.slice(0,8)+'…\nGist ID：'+data.id+'\n本机 '+state.records.length+' 条已上传。\n请把上面的 Gist ID 另存一处（换手机要用）。');
+      toast('✅ 已创建 Gist 并上传');
+    }
+    renderSyncStatus();
+  }catch(e){
+    const msg='❌ 失败：'+e.message;
+    setSyncStatus(msg);
+    alert(msg+'\n\n常见原因：\n• Token 不是 classic 或没勾 gist scope\n• Token 已过期/失效\n• 网络到 GitHub 不稳');
+  }finally{btn.classList.remove('busy');btn.textContent='创建 / 绑定 Gist';}
+}
+
+async function backupNow(){
+  if(!configured()){openSync();return;}
+  const btn=document.getElementById('backup-btn');
+  if(btn){btn.classList.add('busy');btn.textContent='备份中…';}
+  setSyncStatus('正在备份到云端…');
+  try{
+    await pushState();
+    persist();render();
+    toast('☁ 已备份 · 共 '+state.records.length+' 条');
+    setSyncStatus('✅ 已备份到云端 · 共 '+state.records.length+' 条\n上次：'+fmtTime(state.config.lastSync));
+  }catch(e){
+    toast('备份失败：'+e.message);
+    setSyncStatus('❌ 失败：'+e.message);
+  }finally{if(btn){btn.classList.remove('busy');btn.textContent='☁ 备份到云端';}}
+}
+async function restoreNow(){
+  if(!configured()){openSync();return;}
+  const btn=document.getElementById('restore-btn');
+  if(btn){btn.classList.add('busy');btn.textContent='恢复中…';}
+  setSyncStatus('正在从云端拉取…');
+  try{
+    const remote=await pullRemote();
+    if(!remote){setSyncStatus('云端没有记录（可能是新 Gist）。');toast('云端无记录');return;}
+    const before=state.records.length;
+    mergeRemote(remote);
+    state.config.cloudCount=state.records.length;
+    persist();render();
+    const after=state.records.length;
+    toast('☁ 已恢复 · 共 '+after+' 条');
+    setSyncStatus('✅ 已从云端合并 · 本机 '+before+' → '+after+' 条\n（按时间较新者为准，不会丢本机现有的）');
+  }catch(e){
+    toast('恢复失败：'+e.message);
+    setSyncStatus('❌ 失败：'+e.message);
+  }finally{if(btn){btn.classList.remove('busy');btn.textContent='☁ 从云端恢复';}}
+}
+function copyGistId(){
+  const v=document.getElementById('cfg-gistid').value.trim();
+  if(!v){toast('还没有 Gist ID');return;}
+  const t=document.createElement('textarea');t.value=v;document.body.appendChild(t);t.select();
+  try{document.execCommand('copy');toast('Gist ID 已复制：'+v.slice(0,8)+'…');}
+  catch(e){toast('复制失败，请手动选中复制');}
+  document.body.removeChild(t);
+}
+// 自动备份（防误删云端保护）：只在"本机记录数 ≥ 上次已知云端数"时推送，
+// 避免本机数据被浏览器清空/损坏后，把残缺数据推上去覆盖云端好数据。
+let autoBackupTimer=null;
+function autoPush(){
+  if(!configured())return;
+  clearTimeout(autoBackupTimer);
+  autoBackupTimer=setTimeout(async()=>{
+    const localN=state.records.length;
+    const cloudN=state.config.cloudCount||0;
+    if(localN<cloudN){
+      // 本机比云端少——可能是本机数据被清了，不自动推，提示用户用「从云端恢复」
+      console.warn('autoPush skipped: local',localN,'< cloud',cloudN);
+      return;
+    }
+    try{await pushState();}catch(e){console.warn('autoPush',e);}
+  },2000);
+}
+function fmtTime(iso){if(!iso)return '—';const d=new Date(iso);const p=n=>String(n).padStart(2,'0');return `${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`;}
+
+function openSync(){
+  document.getElementById('cfg-token').value=state.config.token||'';
+  document.getElementById('cfg-gistid').value=state.config.gistId||'';
+  renderSyncStatus();
+  document.getElementById('sync-mask').classList.add('show');
+}
+function closeSync(){document.getElementById('sync-mask').classList.remove('show');}
+function setSyncStatus(msg){
+  const el=document.getElementById('sync-status');
+  if(el)el.innerHTML=String(msg).replace(/\n/g,'<br>');
+}
+function renderSyncStatus(){
+  const el=document.getElementById('sync-status');
+  const sub=document.getElementById('subtitle');
+  if(configured()){
+    if(el)el.innerHTML=`已连接 Gist <b>${state.config.gistId.slice(0,8)}…</b><br>上次备份：${fmtTime(state.config.lastSync)}`;
+    if(sub)sub.textContent='已云备份 · 共 '+state.records.length+' 条';
+  }else{
+    if(el)el.textContent='未配置。点「创建 / 绑定 Gist」开始。';
+    if(sub)sub.textContent='记录此刻的自己';
+  }
+}
+function disconnect(){
+  if(!confirm('断开云备份？\n（本机记录保留，Token 从本设备清除；Gist 和数据仍在你的 GitHub，换手机可继续用同一 Gist ID）'))return;
+  state.config={};persist();renderSyncStatus();
+  document.getElementById('cfg-token').value='';
+  document.getElementById('cfg-gistid').value='';
+  toast('已断开');
+}
+
+/* ============ toast ============ */
+let toastTimer=null;
+function toast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+// 全局错误捕获，便于排查"没反应"
+window.addEventListener('error',e=>{toast('JS错误：'+(e.message||'未知'));console.error(e);});
+window.addEventListener('unhandledrejection',e=>{toast('请求失败：'+(e.reason&&e.reason.message||e.reason||''));console.error(e);});
+
+/* ============ PWA ============ */
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('install-btn').classList.add('show');});
+function install(){if(!deferredPrompt){alert('当前浏览器不支持自动安装。\niOS：Safari 分享→添加到主屏\n安卓：Chrome 菜单→添加到主屏幕');return;}deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById('install-btn').classList.remove('show');});}
+if(location.protocol.startsWith('http')&&'serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(e=>console.warn('SW 注册失败',e));
+}
+
+/* ============ 启动 ============ */
+load();renderTabs();render();
+// 请求持久化存储：桌面 Chrome/Edge PWA、Android 装成应用后授予即不再驱逐 localStorage/IDB；iOS 忽略但不报错
+// 注意：persist() 只挡"内存压力驱逐"，挡不住 Edge"关闭时清除站点数据"——后者需在 Edge 设置里给本站点加 Cookie「允许」例外
+let storagePersisted=null; // null=未知 true=已持久 false=未持久
+function ensurePersist(){
+  if(!navigator.storage||!navigator.storage.persist)return;
+  // 先看是否已持久，再按需请求；把结果记到 storagePersisted 并刷新状态显示
+  navigator.storage.persisted ? navigator.storage.persisted().then(already=>{
+    if(already){storagePersisted=true;renderSyncStatus();}
+    else return navigator.storage.persist().then(g=>{storagePersisted=g;renderSyncStatus();}).catch(()=>{});
+  }).catch(()=>{}) : navigator.storage.persist().then(g=>{storagePersisted=g;renderSyncStatus();}).catch(()=>{});
+}
+ensurePersist();
+window.addEventListener('pointerdown',ensurePersist,{once:true});
+// 纯本地版：启动不自动拉取云端（避免被污染的墓碑删掉本机记录）。备份/迁移用「导出/导入」。
+
+</script>
+</body>
+</html>
